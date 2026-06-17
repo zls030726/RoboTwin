@@ -1,25 +1,29 @@
-import sys
 import os
+import pdb
+import sys
+import yaml
+import argparse
+import importlib
+import traceback
 import subprocess
-
+os.chdir("/data7/Users/zls/VLA/3DCogVLA++/RoboTwin")
+sys.path.insert(0, "/data7/Users/zls/VLA/3DCogVLA++")
 sys.path.append("./")
 sys.path.append(f"./policy")
 sys.path.append("./description/utils")
-from envs import CONFIGS_PATH
-from envs.utils.create_actor import UnStableError
 
 import numpy as np
 from pathlib import Path
 from collections import deque
-import traceback
-
-import yaml
 from datetime import datetime
-import importlib
-import argparse
-import pdb
-
+from envs import CONFIGS_PATH
+from script.test_render import Sapien_TEST
 from generate_episode_instructions import *
+from envs.utils.create_actor import UnStableError
+
+from Your_Policy.deploy_policy import get_model 
+from Your_Policy.deploy_policy import eval as eval_func
+from Your_Policy.deploy_policy import reset_model as reset_func
 
 current_file_path = os.path.abspath(__file__)
 parent_directory = os.path.dirname(current_file_path)
@@ -72,8 +76,6 @@ def main(usr_args):
     save_dir = None
     video_save_dir = None
     video_size = None
-
-    get_model = eval_function_decorator(policy_name, "get_model")
 
     with open(f"./task_config/{task_config}.yml", "r", encoding="utf-8") as f:
         args = yaml.load(f.read(), Loader=yaml.FullLoader)
@@ -206,8 +208,6 @@ def eval_policy(task_name,
     suc_test_seed_list = []
 
     policy_name = args["policy_name"]
-    eval_func = eval_function_decorator(policy_name, "eval")
-    reset_func = eval_function_decorator(policy_name, "reset_model")
 
     now_seed = st_seed
     task_total_reward = 0
@@ -233,14 +233,15 @@ def eval_policy(task_name,
                 args["render_freq"] = render_freq
                 continue
             except Exception as e:
-                # stack_trace = traceback.format_exc()
                 # print(" -------------")
                 # print("Error: ", e)
+                # traceback.print_exc()
                 # print(" -------------")
                 TASK_ENV.close_env()
                 now_seed += 1
                 args["render_freq"] = render_freq
                 print("error occurs !")
+                # exit(0)
                 continue
 
         if (not expert_check) or (TASK_ENV.plan_success and TASK_ENV.check_success()):
@@ -354,7 +355,6 @@ def parse_args_and_config():
 
 
 if __name__ == "__main__":
-    from test_render import Sapien_TEST
     Sapien_TEST()
 
     usr_args = parse_args_and_config()
