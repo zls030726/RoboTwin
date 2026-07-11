@@ -1,0 +1,14 @@
+# Basic experiment configuration (keep unchanged)
+policy_name: VLDA
+task_name: beat_block_hammer
+task_config: demo_randomized
+ckpt_setting: 80000
+seed: 42
+instruction_type: unseen
+
+# VLDA checkpoint/model parameters
+train_config_name: vlda_robotwin
+# You can either set checkpoint_dir directly, or set exp_name + ckpt_setting.
+checkpoint_dir: null
+exp_name: robotwin_50
+action_chunk_steps: 50

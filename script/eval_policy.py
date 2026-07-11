@@ -2,6 +2,8 @@ import sys
 import os
 import subprocess
 
+os.chdir("/root/VLDA/RoboTwin")
+sys.path.insert(0, "/root/VLDA")
 sys.path.append("./")
 sys.path.append(f"./policy")
 sys.path.append("./description/utils")
@@ -61,6 +63,14 @@ def get_embodiment_config(robot_file):
     return embodiment_args
 
 
+def coerce_bool(value):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in ("1", "true", "yes", "y", "on")
+    return bool(value)
+
+
 def main(usr_args):
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     task_name = usr_args["task_name"]
@@ -81,6 +91,10 @@ def main(usr_args):
     args['task_name'] = task_name
     args["task_config"] = task_config
     args["ckpt_setting"] = ckpt_setting
+    if "eval_video_log" in usr_args:
+        args["eval_video_log"] = coerce_bool(usr_args["eval_video_log"])
+    else:
+        args["eval_video_log"] = coerce_bool(args.get("eval_video_log", False))
 
     embodiment_type = args.get("embodiment")
     embodiment_config_path = os.path.join(CONFIGS_PATH, "_embodiment_config.yml")
@@ -122,7 +136,7 @@ def main(usr_args):
         embodiment_name = str(embodiment_type[0]) + "+" + str(embodiment_type[1])
 
     save_dir = Path(f"eval_result/{task_name}/{policy_name}/{task_config}/{ckpt_setting}/{current_time}")
-    save_dir.mkdir(parents=True, exist_ok=True)
+    # save_dir.mkdir(parents=True, exist_ok=True)
 
     if args["eval_video_log"]:
         video_save_dir = save_dir
@@ -175,7 +189,12 @@ def main(usr_args):
 
     topk_success_rate = sorted(suc_nums, reverse=True)[:topk]
 
-    file_path = os.path.join(save_dir, f"_result.txt")
+    # use own file path
+    # file_path = os.path.join(save_dir, f"_result.txt")
+    result_dir = Path("/root/VLDA/logs/eval/robotwin")
+    result_dir.mkdir(parents=True, exist_ok=True)
+    file_path = result_dir / f"{task_name}_{ckpt_setting}.txt"
+
     with open(file_path, "w") as file:
         file.write(f"Timestamp: {current_time}\n\n")
         file.write(f"Instruction Type: {instruction_type}\n\n")
@@ -233,10 +252,11 @@ def eval_policy(task_name,
                 args["render_freq"] = render_freq
                 continue
             except Exception as e:
-                # stack_trace = traceback.format_exc()
-                # print(" -------------")
-                # print("Error: ", e)
-                # print(" -------------")
+                if os.environ.get("ROBOTWIN_DEBUG_ERRORS") == "1":
+                    print(" -------------")
+                    print("Error during expert seed check:", repr(e))
+                    print(traceback.format_exc())
+                    print(" -------------")
                 TASK_ENV.close_env()
                 now_seed += 1
                 args["render_freq"] = render_freq
@@ -260,9 +280,10 @@ def eval_policy(task_name,
         TASK_ENV.set_instruction(instruction=instruction)  # set language instruction
 
         if TASK_ENV.eval_video_path is not None:
+            ffmpeg_bin = os.environ.get("ROBOTWIN_FFMPEG", "ffmpeg")
             ffmpeg = subprocess.Popen(
                 [
-                    "ffmpeg",
+                    ffmpeg_bin,
                     "-y",
                     "-loglevel",
                     "error",
