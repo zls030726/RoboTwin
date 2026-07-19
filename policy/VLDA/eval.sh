@@ -19,15 +19,17 @@ cd "${ROBOTWIN_ROOT}"
 
 export CUDA_VISIBLE_DEVICES=${gpu_id}
 export ROBOTWIN_FFMPEG=${ROBOTWIN_FFMPEG:-/usr/bin/ffmpeg}
+PYTHON_BIN=${LIBERO_PY:-/data7/Users/zls/VLA/VLDA/RoboTwin/.venv/bin/python}
 echo -e "[33mgpu id (to use): ${gpu_id}[0m"
 echo -e "[33mffmpeg: ${ROBOTWIN_FFMPEG}[0m"
+echo -e "[33mpython: ${PYTHON_BIN}[0m"
 
 LOG_DIR="/data7/Users/zls/VLA/VLDA/logs/eval/robotwin/${task_name}"
 mkdir -p "${LOG_DIR}"
 
 LOG_FILE="${LOG_DIR}/${ckpt_setting}_$(date +%Y%m%d_%H%M%S).log"
 
-PYTHONWARNINGS=ignore::UserWarning python script/eval_policy.py \
+PYTHONWARNINGS=ignore::UserWarning "${PYTHON_BIN}" script/eval_policy.py \
     --config policy/${policy_name}/deploy_policy.yml \
     --overrides \
     --task_name ${task_name} \
