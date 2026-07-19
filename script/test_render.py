@@ -1,6 +1,7 @@
 import sys
 import warnings
 import os
+import traceback
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=UserWarning)
@@ -49,9 +50,12 @@ class Sapien_TEST(gym.Env):
         try:
             self.setup_scene()
             print("\033[32m" + "Render Well" + "\033[0m")
-        except:
+        except Exception as e:
             print("\033[31m" + "Render Error" + "\033[0m")
-            exit()
+            if os.environ.get("ROBOTWIN_DEBUG_ERRORS") == "1":
+                print("Render exception:", repr(e))
+                print(traceback.format_exc())
+            exit(1)
 
     def setup_scene(self, **kwargs):
         """

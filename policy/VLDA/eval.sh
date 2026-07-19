@@ -19,15 +19,18 @@ cd "${ROBOTWIN_ROOT}"
 
 export CUDA_VISIBLE_DEVICES=${gpu_id}
 export ROBOTWIN_FFMPEG=${ROBOTWIN_FFMPEG:-/usr/bin/ffmpeg}
+PYTHON_BIN=${LIBERO_PY:-/root/autodl-tmp/VLDA/robotwin/.venv/bin/python}
 echo -e "[33mgpu id (to use): ${gpu_id}[0m"
 echo -e "[33mffmpeg: ${ROBOTWIN_FFMPEG}[0m"
+echo -e "[33mpython: ${PYTHON_BIN}[0m"
 
 LOG_DIR="/root/VLDA/logs/eval/robotwin/${task_name}"
 mkdir -p "${LOG_DIR}"
 
 LOG_FILE="${LOG_DIR}/${ckpt_setting}_$(date +%Y%m%d_%H%M%S).log"
+echo -e "[33mlog file: ${LOG_FILE}[0m"
 
-PYTHONWARNINGS=ignore::UserWarning python script/eval_policy.py \
+if ! PYTHONWARNINGS=ignore::UserWarning "${PYTHON_BIN}" script/eval_policy.py \
     --config policy/${policy_name}/deploy_policy.yml \
     --overrides \
     --task_name ${task_name} \
@@ -40,4 +43,8 @@ PYTHONWARNINGS=ignore::UserWarning python script/eval_policy.py \
     --checkpoint_id ${checkpoint_id} \
     --action_chunk_steps ${action_chunk_steps} \
     --eval_video_log ${eval_video_log} \
-    > "${LOG_FILE}" 2>&1
+    > "${LOG_FILE}" 2>&1; then
+    echo -e "[31mEval failed. Last lines from ${LOG_FILE}:[0m"
+    tail -n 120 "${LOG_FILE}"
+    exit 1
+fi
