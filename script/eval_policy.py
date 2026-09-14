@@ -2,8 +2,8 @@ import sys
 import os
 import subprocess
 
-os.chdir("/data7/Users/zls/VLA/VLDA/RoboTwin")
-sys.path.insert(0, "/data7/Users/zls/VLA/VLDA")
+os.chdir("/workspace/VLA/VLDA/RoboTwin")
+sys.path.insert(0, "/workspace/VLA/VLDA")
 sys.path.append("./")
 sys.path.append(f"./policy")
 sys.path.append("./description/utils")
@@ -191,7 +191,7 @@ def main(usr_args):
 
     # use own file path
     # file_path = os.path.join(save_dir, f"_result.txt")
-    result_dir = Path("/data7/Users/zls/VLA/VLDA/logs/eval/robotwin")
+    result_dir = Path("/workspace/VLA/VLDA/logs/eval/robotwin")
     result_dir.mkdir(parents=True, exist_ok=True)
     file_path = result_dir / f"{task_name}_{ckpt_setting}.txt"
 

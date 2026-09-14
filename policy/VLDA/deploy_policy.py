@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 
 
-# RoboTwin runs this module from /data7/Users/zls/VLA/VLDA/RoboTwin, while the VLDA model
-# and policy factory live in /data7/Users/zls/VLA/VLDA/models. Add the repository root
+# RoboTwin runs this module from /workspace/VLA/VLDA/RoboTwin, while the VLDA model
+# and policy factory live in /workspace/VLA/VLDA/models. Add the repository root
 # explicitly so `models.*` resolves to our VLDA implementation.
 VLDA_ROOT = Path(__file__).resolve().parents[3]
 OPENPI_SRC = VLDA_ROOT / "openpi" / "src"
