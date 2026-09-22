@@ -30,3 +30,6 @@ envs/curobo/*
 
 /*.json*
 /*.txt
+
+.ffmpeg7/*
+curobo/*

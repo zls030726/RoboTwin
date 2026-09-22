@@ -79,6 +79,11 @@ def get_embodiment_config(robot_file: str) -> dict[str, Any]:
 
 def build_policy_client(usr_args: dict[str, Any]):
     protocol = usr_args.get("protocol", "ws")
+    if protocol == "openpi":
+        from policy.ShiftVLA.deploy_policy import get_model
+
+        return get_model(usr_args)
+
     xpolicylab_root = usr_args.get("xpolicylab_root") or os.environ.get("XPOLICYLAB_ROOT") or DEFAULT_XPOLICYLAB_ROOT
     add_xpolicylab_paths(xpolicylab_root)
 
@@ -151,9 +156,10 @@ def build_eval_save_dir(
     task_config: str,
     ckpt_setting: Any,
     current_time: str,
+    result_dir: str = "eval_result",
 ) -> Path:
     return (
-        Path("eval_result")
+        Path(result_dir).expanduser()
         / task_name
         / policy_name
         / task_config
@@ -174,6 +180,8 @@ def load_task_args(usr_args: dict[str, Any]) -> tuple[dict[str, Any], str]:
     args["task_config"] = task_config
     args["ckpt_setting"] = ckpt_setting
     args["policy_name"] = usr_args["policy_name"]
+    if usr_args.get("eval_video_log") is not None:
+        args["eval_video_log"] = parse_bool(usr_args["eval_video_log"])
     ensure_xpolicylab_observation_flags(args)
 
     embodiment_type = args.get("embodiment")
@@ -284,7 +292,8 @@ def main(usr_args: dict[str, Any]) -> None:
     usr_args["instruction_type"] = instruction_type
 
     save_dir = build_eval_save_dir(
-        task_name, policy_name, task_config, ckpt_setting, current_time
+        task_name, policy_name, task_config, ckpt_setting, current_time,
+        result_dir=usr_args.get("result_dir", "eval_result"),
     )
     save_dir.mkdir(parents=True, exist_ok=True)
     video_size = None
@@ -348,7 +357,8 @@ def main_batch(usr_args: dict[str, Any]) -> None:
     usr_args["instruction_type"] = instruction_type
 
     save_dir = build_eval_save_dir(
-        task_name, policy_name, task_config, ckpt_setting, current_time
+        task_name, policy_name, task_config, ckpt_setting, current_time,
+        result_dir=usr_args.get("result_dir", "eval_result"),
     )
     save_dir.mkdir(parents=True, exist_ok=True)
     video_size = None
@@ -1334,7 +1344,7 @@ def parse_args() -> dict[str, Any]:
     parser.add_argument("--policy_name", required=True)
     parser.add_argument("--host", default="localhost")
     parser.add_argument("--port", required=True)
-    parser.add_argument("--protocol", default="ws", choices=("ws", "legacy_tcp"))
+    parser.add_argument("--protocol", default="ws", choices=("ws", "legacy_tcp", "openpi"))
     parser.add_argument("--eval_batch", default="false")
     parser.add_argument("--root_dir", default=str(ROBOTWIN_ROOT))
     parser.add_argument("--device_id", default="0")
@@ -1347,6 +1357,10 @@ def parse_args() -> dict[str, Any]:
     parser.add_argument("--frequency", type=int, default=None)
     parser.add_argument("--num_workers", type=int, default=None)
     parser.add_argument("--max_seed_attempts", type=int, default=None)
+    parser.add_argument("--action_chunk_steps", type=int, default=50)
+    parser.add_argument("--ckpt_setting", default=None)
+    parser.add_argument("--eval_video_log", default=None)
+    parser.add_argument("--result_dir", default="eval_result")
     args = parser.parse_args()
 
     usr_args: dict[str, Any] = {
@@ -1364,8 +1378,13 @@ def parse_args() -> dict[str, Any]:
         "instruction_type": args.instruction_type,
         "xpolicylab_root": str(Path(args.root_dir).resolve() / "XPolicyLab"),
         "eval_batch": parse_bool(args.eval_batch),
+        "action_chunk_steps": args.action_chunk_steps,
+        "eval_video_log": args.eval_video_log,
+        "result_dir": args.result_dir,
     }
 
+    if args.ckpt_setting is not None:
+        usr_args["ckpt_setting"] = args.ckpt_setting
     if args.test_num is not None:
         usr_args["test_num"] = args.test_num
     if args.expert_check is not None:

@@ -1,21 +1,21 @@
 ROBOTWIN_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROBOTWIN_ROOT}"
 
-echo "Installing the necessary packages ..."
-python -m pip install -r scripts/requirements.txt
+# echo "Installing the necessary packages ..."
+# uv pip install -r scripts/requirements.txt
 
-echo "Installing pytorch3d ..."
-python -m pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable" --no-build-isolation
+# echo "Installing pytorch3d ..."
+# uv pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable" --no-build-isolation
 
-echo "Preparing XPolicyLab ..."
-bash "${ROBOTWIN_ROOT}/scripts/update_xpolicylab.sh"
+# echo "Preparing XPolicyLab ..."
+# bash "${ROBOTWIN_ROOT}/scripts/update_xpolicylab.sh"
 
 echo "Installing XPolicyLab in the RoboTwin environment ..."
-python -m pip install -e "${ROBOTWIN_ROOT}/XPolicyLab"
+uv pip install -e "${ROBOTWIN_ROOT}/XPolicyLab"
 
 echo "Adjusting code in sapien/wrapper/urdf_loader.py ..."
 # location of sapien, like "~/.conda/envs/RoboTwin/lib/python3.10/site-packages/sapien"
-SAPIEN_LOCATION=$(python -m pip show sapien | grep 'Location' | awk '{print $2}')/sapien
+SAPIEN_LOCATION=$(uv pip show sapien | grep 'Location' | awk '{print $2}')/sapien
 # Adjust some code in wrapper/urdf_loader.py
 URDF_LOADER=$SAPIEN_LOCATION/wrapper/urdf_loader.py
 # ----------- before -----------
@@ -41,26 +41,26 @@ sed -i -E 's/("r")(\))( as)/\1, encoding="utf-8") as/g' $URDF_LOADER
 
 echo "Adjusting code in mplib/planner.py ..."
 # location of mplib, like "~/.conda/envs/RoboTwin/lib/python3.10/site-packages/mplib"
-MPLIB_LOCATION=$(python -m pip show mplib | grep 'Location' | awk '{print $2}')/mplib
+MPLIB_LOCATION=$(uv pip show mplib | grep 'Location' | awk '{print $2}')/mplib
 
-# Adjust some code in planner.py
-# ----------- before -----------
-# 807             if np.linalg.norm(delta_twist) < 1e-4 or collide or not within_joint_limit:
-# 808                 return {"status": "screw plan failed"}
-# ----------- after  ----------- 
-# 807             if np.linalg.norm(delta_twist) < 1e-4 or not within_joint_limit:
-# 808                 return {"status": "screw plan failed"}
-PLANNER=$MPLIB_LOCATION/planner.py
-sed -i -E 's/(if np.linalg.norm\(delta_twist\) < 1e-4 )(or collide )(or not within_joint_limit:)/\1\3/g' $PLANNER
+# # Adjust some code in planner.py
+# # ----------- before -----------
+# # 807             if np.linalg.norm(delta_twist) < 1e-4 or collide or not within_joint_limit:
+# # 808                 return {"status": "screw plan failed"}
+# # ----------- after  ----------- 
+# # 807             if np.linalg.norm(delta_twist) < 1e-4 or not within_joint_limit:
+# # 808                 return {"status": "screw plan failed"}
+# PLANNER=$MPLIB_LOCATION/planner.py
+# sed -i -E 's/(if np.linalg.norm\(delta_twist\) < 1e-4 )(or collide )(or not within_joint_limit:)/\1\3/g' $PLANNER
 
-echo "Installing Curobo ..."
-cd envs
-git clone --branch v0.7.8 --depth 1 https://github.com/NVlabs/curobo.git
-cd curobo
-python -m pip install -e . --no-build-isolation
-python -m pip install warp-lang==1.12.0
-python -m pip install setuptools==69.5.1
-cd ../..
+# echo "Installing Curobo ..."
+# cd envs
+# git clone --branch v0.7.8 --depth 1 https://github.com/NVlabs/curobo.git
+# cd curobo
+# uv pip install -e . --no-build-isolation
+# uv pip install warp-lang==1.12.0
+# uv pip install setuptools==69.5.1
+# cd ../..
 
 echo "Installation basic environment complete!"
 echo -e "You need to:"
